@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 80" fill="none">
+  <defs>
+    <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2563eb" />
+      <stop offset="60%" stop-color="#3b82f6" />
+      <stop offset="100%" stop-color="#10b981" />
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24" />
+      <stop offset="100%" stop-color="#d97706" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Icon Emblem -->
+  <rect x="10" y="10" width="60" height="60" rx="16" fill="url(#logoGrad)" />
+  <circle cx="40" cy="40" r="18" fill="url(#goldGrad)" stroke="#fef08a" stroke-width="2" />
+  <text x="40" y="47" font-family="'Kantumruy Pro', sans-serif" font-weight="900" font-size="20" fill="#ffffff" text-anchor="middle">$</text>
+  
+  <!-- Text Brand -->
+  <text x="82" y="38" font-family="'Kantumruy Pro', sans-serif" font-weight="800" font-size="24" fill="#0f172a">
+    YSK <tspan fill="#2563eb">FINANCE</tspan>
+  </text>
+  <text x="83" y="58" font-family="'Kantumruy Pro', sans-serif" font-weight="600" font-size="12" fill="#64748b" letter-spacing="0.5">
+    ប្រព័ន្ធគ្រប់គ្រងហិរញ្ញវត្ថុឆ្លាតវៃ
+  </text>
+</svg>

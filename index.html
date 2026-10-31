@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>YSK Family Finance - ប្រព័ន្ធគ្រប់គ្រងហិរញ្ញវត្ថុគ្រួសារឆ្លាតវៃ</title>
+  
+  <!-- PWA Meta Tags -->
+  <meta name="theme-color" content="#2563eb">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="YSK Finance">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" href="assets/icons/favicon-64.png">
+  <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              800: '#1e40af',
+              900: '#1e3a8a',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Font Awesome CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+  <!-- Top App Bar -->
+  <header class="bg-white/95 backdrop-blur-md border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      
+      <!-- Brand Logo -->
+      <div class="flex items-center gap-3 cursor-pointer" onclick="window.app.switchView('dashboard')">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-700 via-blue-600 to-emerald-500 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
+          <i class="fa-solid fa-wallet text-lg"></i>
+        </div>
+        <div>
+          <div class="font-black text-lg text-slate-900 tracking-tight flex items-center gap-1.5">
+            YSK <span class="text-blue-600">FINANCE</span>
+          </div>
+          <div class="text-[11px] text-slate-500 hidden sm:block font-medium" data-i18n="appSubtitle">
+            ប្រព័ន្ធគ្រប់គ្រងហិរញ្ញវត្ថុគ្រួសារឆ្លាតវៃ
+          </div>
+        </div>
+      </div>
+
+      <!-- Controls Right: Language, Currency, GitHub Auto-Update Pill, Add Button -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        
+        <!-- GitHub Auto-Update Pill Button -->
+        <button onclick="window.app.switchView('settings')" class="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 hover:bg-blue-50 border border-slate-200 text-xs font-semibold text-slate-700 hover:text-blue-600 transition-colors">
+          <i class="fa-brands fa-github text-sm"></i>
+          <span>GitHub Auto-Update</span>
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        </button>
+
+        <!-- Currency Switcher Toggle -->
+        <button id="btn-currency-toggle" class="px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-xs font-bold text-slate-700 transition-colors flex items-center gap-1">
+          <i class="fa-solid fa-coins text-amber-500"></i>
+          <span id="currency-label">$ (USD)</span>
+        </button>
+
+        <!-- Language Switcher Toggle -->
+        <button id="btn-lang-toggle" class="px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-xs font-bold text-slate-700 transition-colors flex items-center gap-1.5">
+          <span id="lang-flag" class="text-sm">🇰🇭</span>
+          <span id="lang-label">ភាសាខ្មែរ</span>
+        </button>
+
+        <!-- Primary Add Transaction Button -->
+        <button class="trigger-add-tx hidden sm:flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-600/20 transition-all active:scale-95">
+          <i class="fa-solid fa-plus text-xs"></i>
+          <span data-i18n="btnAddTransaction">កត់ត្រាថ្មី</span>
+        </button>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Layout -->
+  <div class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-5 flex gap-6">
+
+    <!-- Desktop Sidebar Navigation -->
+    <aside class="desktop-sidebar w-60 shrink-0 hidden md:block">
+      <nav class="space-y-1.5 sticky top-24">
+        <a href="#dashboard" data-view-target="dashboard" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold bg-blue-50 text-blue-600">
+          <i class="fa-solid fa-chart-line w-5"></i>
+          <span data-i18n="navDashboard">ផ្ទាំងគ្រប់គ្រង</span>
+        </a>
+        <a href="#transactions" data-view-target="transactions" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors">
+          <i class="fa-solid fa-receipt w-5"></i>
+          <span data-i18n="navTransactions">ប្រតិបត្តិការ</span>
+        </a>
+        <a href="#budgets" data-view-target="budgets" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors">
+          <i class="fa-solid fa-pie-chart w-5"></i>
+          <span data-i18n="navBudgets">កញ្ចប់ថវិកា</span>
+        </a>
+        <a href="#analytics" data-view-target="analytics" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors">
+          <i class="fa-solid fa-brain w-5"></i>
+          <span data-i18n="navAnalytics">ការវិភាគឆ្លាតវៃ</span>
+        </a>
+        <a href="#debts" data-view-target="debts" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors">
+          <i class="fa-solid fa-hand-holding-dollar w-5"></i>
+          <span data-i18n="navDebts">បំណុល & កម្ចី</span>
+        </a>
+        <a href="#goals" data-view-target="goals" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors">
+          <i class="fa-solid fa-bullseye w-5"></i>
+          <span data-i18n="navGoals">គោលដៅសន្សំ</span>
+        </a>
+        <a href="#settings" data-view-target="settings" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors">
+          <i class="fa-solid fa-gear w-5"></i>
+          <span data-i18n="navSettings">ការកំណត់ & GitHub</span>
+        </a>
+      </nav>
+
+      <!-- Desktop Mini Quick Card -->
+      <div class="mt-8 p-4 bg-gradient-to-br from-blue-700 to-indigo-800 rounded-2xl text-white shadow-lg shadow-blue-700/20">
+        <div class="flex items-center justify-between text-xs text-blue-200 mb-1">
+          <span data-i18n="githubCurrentVersion">កំណែបច្ចុប្បន្ន</span>
+          <span id="current-app-version" class="font-mono bg-white/20 px-2 py-0.5 rounded-full text-[10px]">v1.0.0</span>
+        </div>
+        <div class="text-sm font-bold mt-2 flex items-center gap-2">
+          <i class="fa-solid fa-cloud-arrow-up text-emerald-400"></i>
+          <span>GitHub Auto Sync</span>
+        </div>
+        <p class="text-[11px] text-blue-200 mt-1" data-i18n="autoDeployDesc">
+          Auto update on push to GitHub.
+        </p>
+        <button onclick="window.updater.checkForUpdate(false)" class="mt-3 w-full py-1.5 bg-white text-blue-700 font-bold rounded-xl text-xs hover:bg-blue-50 transition-colors shadow-sm">
+          <i class="fa-solid fa-arrows-rotate mr-1"></i>
+          <span data-i18n="btnCheckUpdate">ពិនិត្យមើលកំណែថ្មី</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Views -->
+    <main class="flex-1 min-w-0 space-y-6">
+
+      <!-- ================= VIEW 1: DASHBOARD ================= -->
+      <section id="view-dashboard" class="view-section space-y-6">
+        
+        <!-- Filter Bar: Month Selector & Quick Action -->
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+              <i class="fa-regular fa-calendar text-lg"></i>
+            </div>
+            <div>
+              <label for="filter-month" class="text-xs text-slate-500 block font-medium" data-i18n="filterMonth">ជ្រើសរើសខែ</label>
+              <select id="filter-month" class="bg-transparent font-bold text-slate-800 text-sm focus:outline-none cursor-pointer">
+                <!-- Dynamically populated -->
+              </select>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="btn-export-csv" class="flex-1 sm:flex-initial px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors">
+              <i class="fa-solid fa-file-excel text-emerald-600"></i>
+              <span data-i18n="btnExportExcel">ទាញយក Excel</span>
+            </button>
+            <button id="btn-print-report" class="flex-1 sm:flex-initial px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors">
+              <i class="fa-solid fa-print text-blue-600"></i>
+              <span data-i18n="btnPrintReport">បោះពុម្ព</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Stat Cards Grid -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          
+          <!-- Card 1: Total Family Balance -->
+          <div class="p-4 sm:p-5 bg-white rounded-2xl border border-slate-200 shadow-sm card-hover">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs text-slate-500 font-semibold" data-i18n="cardTotalBalance">សមតុល្យសរុប</span>
+              <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-sm">
+                <i class="fa-solid fa-vault"></i>
+              </div>
+            </div>
+            <div id="stat-total-balance" class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">$0.00</div>
+            <div class="text-[11px] text-slate-400 mt-1">ទ្រព្យសម្បត្តិសរុបទាំងអស់</div>
+          </div>
+
+          <!-- Card 2: Monthly Income -->
+          <div class="p-4 sm:p-5 bg-white rounded-2xl border border-slate-200 shadow-sm card-hover">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs text-slate-500 font-semibold" data-i18n="cardMonthlyIncome">ចំណូលខែនេះ</span>
+              <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm">
+                <i class="fa-solid fa-arrow-trend-up"></i>
+              </div>
+            </div>
+            <div id="stat-monthly-income" class="text-xl sm:text-2xl font-black text-emerald-600 tracking-tight">$0.00</div>
+            <div class="text-[11px] text-emerald-600 font-medium mt-1 flex items-center gap-1">
+              <i class="fa-solid fa-circle-check text-[9px]"></i> ប្រភពចំណូលគ្រួសារ
+            </div>
+          </div>
+
+          <!-- Card 3: Monthly Expenses -->
+          <div class="p-4 sm:p-5 bg-white rounded-2xl border border-slate-200 shadow-sm card-hover">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs text-slate-500 font-semibold" data-i18n="cardMonthlyExpense">ចំណាយខែនេះ</span>
+              <div class="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center text-sm">
+                <i class="fa-solid fa-arrow-trend-down"></i>
+              </div>
+            </div>
+            <div id="stat-monthly-expense" class="text-xl sm:text-2xl font-black text-rose-600 tracking-tight">$0.00</div>
+            <div class="text-[11px] text-slate-400 mt-1">ចំណាយរួម និងសមាជិក</div>
+          </div>
+
+          <!-- Card 4: Net Savings & Savings Rate -->
+          <div class="p-4 sm:p-5 bg-white rounded-2xl border border-slate-200 shadow-sm card-hover">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs text-slate-500 font-semibold" data-i18n="cardNetSavings">ប្រាក់សន្សំសុទ្ធ</span>
+              <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-sm">
+                <i class="fa-solid fa-piggy-bank"></i>
+              </div>
+            </div>
+            <div id="stat-net-savings" class="text-xl sm:text-2xl font-black text-emerald-600 tracking-tight">$0.00</div>
+            <div class="text-[11px] text-slate-500 mt-1 flex items-center gap-1">
+              <span data-i18n="cardSavingsRate">អត្រាសន្សំ</span>: <strong id="stat-savings-rate" class="text-blue-600 font-bold">0%</strong>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Health Score & AI Insights Row -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
+          <!-- Health Score Gauge Card -->
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-3">
+                <div class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                  <i class="fa-solid fa-shield-heart text-blue-600"></i>
+                  <span data-i18n="cardHealthScore">ពិន្ទុសុខភាពហិរញ្ញវត្ថុ</span>
+                </div>
+                <span id="stat-health-status" class="text-xs px-2.5 py-0.5 rounded-full font-bold bg-emerald-100 text-emerald-800">ល្អ</span>
+              </div>
+              <div class="text-center py-4">
+                <div id="stat-health-score" class="text-4xl sm:text-5xl font-black text-blue-700 tracking-tight">85/100</div>
+                <p class="text-xs text-slate-500 mt-2">គណនាដោយស្វ័យប្រវត្តិតាមរយៈអត្រាសន្សំ និងកញ្ចប់ថវិកា</p>
+              </div>
+            </div>
+            <button onclick="window.app.switchView('analytics')" class="w-full py-2 bg-slate-50 hover:bg-slate-100 text-blue-600 font-bold text-xs rounded-xl transition-colors border border-slate-200">
+              មើលការវិភាគលម្អិត <i class="fa-solid fa-arrow-right ml-1"></i>
+            </button>
+          </div>
+
+          <!-- Smart Insights List -->
+          <div class="lg:col-span-2 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+            <div class="font-bold text-slate-800 text-sm mb-3 flex items-center gap-2">
+              <i class="fa-solid fa-wand-magic-sparkles text-amber-500"></i>
+              <span data-i18n="healthTitle">ការវិភាគឆ្លាតវៃ & យោបល់ណែនាំ</span>
+            </div>
+            <div id="smart-insights-list" class="space-y-2.5">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Charts Row -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          
+          <!-- Monthly Trend Chart -->
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+            <div class="font-bold text-slate-800 text-sm mb-4 flex items-center justify-between">
+              <span class="flex items-center gap-2">
+                <i class="fa-solid fa-chart-column text-blue-600"></i>
+                និន្នាការចំណូល vs ចំណាយ (៦ ខែ)
+              </span>
+            </div>
+            <div class="h-64 relative">
+              <canvas id="chart-monthly-trend"></canvas>
+            </div>
+          </div>
+
+          <!-- Category Expense Pie Chart -->
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+            <div class="font-bold text-slate-800 text-sm mb-4 flex items-center justify-between">
+              <span class="flex items-center gap-2">
+                <i class="fa-solid fa-chart-pie text-emerald-600"></i>
+                ការបែងចែកចំណាយតាមជំពូក (Expense Breakdown)
+              </span>
+            </div>
+            <div class="h-64 relative">
+              <canvas id="chart-expense-pie"></canvas>
+            </div>
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- ================= VIEW 2: TRANSACTIONS ================= -->
+      <section id="view-transactions" class="view-section hidden space-y-5">
+        
+        <!-- Filter Toolbar -->
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+          <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+            
+            <!-- Member Filter -->
+            <div>
+              <label class="text-xs text-slate-500 font-medium block mb-1" data-i18n="filterMember">សមាជិកគ្រួសារ</label>
+              <select id="filter-member" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="memberAll" data-i18n="memberAll">គ្រួសារទាំងមូល</option>
+                <option value="memberDad" data-i18n="memberDad">ឪពុក (Dad)</option>
+                <option value="memberMom" data-i18n="memberMom">ម្ដាយ (Mom)</option>
+                <option value="memberSon" data-i18n="memberSon">កូនប្រុស (Son)</option>
+                <option value="memberDaughter" data-i18n="memberDaughter">កូនស្រី (Daughter)</option>
+                <option value="memberShared" data-i18n="memberShared">ចំណាយរួមគ្រួសារ</option>
+              </select>
+            </div>
+
+            <!-- Type Filter -->
+            <div>
+              <label class="text-xs text-slate-500 font-medium block mb-1" data-i18n="filterType">ប្រភេទប្រតិបត្តិការ</label>
+              <select id="filter-type" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="all" data-i18n="filterAll">ទាំងអស់</option>
+                <option value="income" data-i18n="typeIncome">ចំណូល (+)</option>
+                <option value="expense" data-i18n="typeExpense">ចំណាយ (-)</option>
+              </select>
+            </div>
+
+            <!-- Search Field -->
+            <div class="sm:col-span-2">
+              <label class="text-xs text-slate-500 font-medium block mb-1">ស្វែងរក</label>
+              <div class="relative">
+                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-400 text-sm"></i>
+                <input id="search-transactions" type="text" placeholder="ស្វែងរកតាមចំណាំ បរិយាយ..." data-i18n-placeholder="searchPlaceholder" class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Transactions Header & Quick Action -->
+        <div class="flex items-center justify-between">
+          <div class="font-bold text-slate-800 text-base" data-i18n="navTransactions">ប្រតិបត្តិការហិរញ្ញវត្ថុ</div>
+          <button class="trigger-add-tx px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-600/20 flex items-center gap-1.5">
+            <i class="fa-solid fa-plus"></i>
+            <span data-i18n="btnAddTransaction">កត់ត្រាថ្មី</span>
+          </button>
+        </div>
+
+        <!-- Desktop Table Container -->
+        <div class="hidden sm:block bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left">
+              <thead class="bg-slate-50 border-b border-slate-200 text-xs text-slate-500 uppercase tracking-wider font-semibold">
+                <tr>
+                  <th class="py-3 px-4" data-i18n="thDate">កាលបរិច្ឆេទ</th>
+                  <th class="py-3 px-4" data-i18n="thType">ប្រភេទ</th>
+                  <th class="py-3 px-4" data-i18n="thCategory">ជំពូក/ប្រភេទ</th>
+                  <th class="py-3 px-4" data-i18n="thMember">សមាជិក</th>
+                  <th class="py-3 px-4" data-i18n="thAccount">ទូទាត់តាម</th>
+                  <th class="py-3 px-4" data-i18n="thNote">បរិយាយ / ចំណាំ</th>
+                  <th class="py-3 px-4 text-right" data-i18n="thAmount">ចំនួនទឹកប្រាក់</th>
+                  <th class="py-3 px-4 text-center" data-i18n="thActions">សកម្មភាព</th>
+                </tr>
+              </thead>
+              <tbody id="tx-table-body">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Mobile Card List Container -->
+        <div id="tx-mobile-list" class="sm:hidden space-y-2.5">
+          <!-- Dynamically populated -->
+        </div>
+
+      </section>
+
+      <!-- ================= VIEW 3: BUDGETS ================= -->
+      <section id="view-budgets" class="view-section hidden space-y-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="font-bold text-slate-800 text-lg" data-i18n="budgetTitle">កញ្ចប់ថវិកាប្រចាំខែ</h2>
+            <p class="text-xs text-slate-500 mt-0.5" data-i18n="budgetSubtitle">កំណត់ទំហំចំណាយដើម្បីកុំឱ្យលើសផែនការ</p>
+          </div>
+          <button onclick="document.getElementById('modal-budget').classList.remove('hidden'); document.getElementById('modal-budget').classList.add('flex');" class="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-600/20 flex items-center gap-1.5">
+            <i class="fa-solid fa-plus"></i>
+            <span data-i18n="budgetSet">កំណត់ថវិកា</span>
+          </button>
+        </div>
+
+        <!-- Budget Progress Grid -->
+        <div id="budget-progress-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Dynamically populated -->
+        </div>
+      </section>
+
+      <!-- ================= VIEW 4: ANALYTICS ================= -->
+      <section id="view-analytics" class="view-section hidden space-y-6">
+        <div class="bg-gradient-to-r from-blue-700 to-indigo-800 p-6 rounded-3xl text-white shadow-xl">
+          <div class="text-xs font-bold uppercase tracking-wider text-blue-200">Financial Intelligence</div>
+          <h2 class="text-2xl font-black mt-1">ការវិភាគសុខភាពហិរញ្ញវត្ថុគ្រួសារ</h2>
+          <p class="text-xs text-blue-100 mt-1 max-w-xl">
+            ប្រព័ន្ធឆ្លាតវៃធ្វើការវិភាគទិន្នន័យចំណូល ចំណាយ បំណុល និងគោលដៅសន្សំ ដើម្បីផ្ដល់នូវអនុសាសន៍ល្អបំផុតសម្រាប់អនាគតគ្រួសាររបស់អ្នក។
+          </p>
+        </div>
+
+        <!-- In-depth summary grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+            <h3 class="font-bold text-sm text-slate-800 mb-3 flex items-center gap-2">
+              <i class="fa-solid fa-triangle-exclamation text-amber-500"></i>
+              គោលការណ៍ណែនាំ 50/30/20
+            </h3>
+            <div class="space-y-3 text-xs text-slate-600">
+              <div class="p-3 bg-blue-50 rounded-xl">
+                <strong class="text-blue-900 block font-bold mb-0.5">៥០% លើតម្រូវការចាំបាច់ (Needs):</strong>
+                ថ្លៃផ្ទះ ម្ហូបអាហារ ទឹកភ្លើង សាលារៀនកូនៗ និងថែទាំសុខភាព។
+              </div>
+              <div class="p-3 bg-amber-50 rounded-xl">
+                <strong class="text-amber-900 block font-bold mb-0.5">៣០% លើបំណងប្រាថ្នា (Wants):</strong>
+                ការកម្សាន្ត ញ៉ាំអាហារក្រៅផ្ទះ ដំណើរកម្សាន្ត និងទិញសម្ភារៈផ្ទាល់ខ្លួន។
+              </div>
+              <div class="p-3 bg-emerald-50 rounded-xl">
+                <strong class="text-emerald-900 block font-bold mb-0.5">២០% លើការសន្សំ & វិនិយោគ (Savings):</strong>
+                កញ្ចប់គ្រាអាសន្ន ការសងបំណុលមុនកាលកំណត់ និងការវិនិយោគរយៈពេលវែង។
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+            <h3 class="font-bold text-sm text-slate-800 mb-3 flex items-center gap-2">
+              <i class="fa-solid fa-chart-line text-blue-600"></i>
+              គន្លឹះគ្រប់គ្រងហិរញ្ញវត្ថុគ្រួសារឆ្លាតវៃ
+            </h3>
+            <ul class="space-y-2 text-xs text-slate-600 list-disc list-inside">
+              <li>កត់ត្រារាល់ចំណាយតូចៗតាមទូរស័ព្ទភ្លាមៗបន្ទាប់ពីទិញទំនិញរួច។</li>
+              <li>ពិនិត្យមើលកញ្ចប់ថវិកាជារៀងរាល់ចុងសប្ដាហ៍ដើម្បីជៀសវាងការចំណាយលើស។</li>
+              <li>បង្វែរប្រាក់សន្សំចូលទៅក្នុងគណនីដាច់ដោយឡែក (High-interest savings) ភ្លាមៗពេលបើកប្រាក់ខែ។</li>
+              <li>ប្រើប្រាស់រូបិយប័ណ្ណរៀល (KHR) សម្រាប់ការចំណាយប្រចាំថ្ងៃ និងដុល្លារ (USD) សម្រាប់សន្សំ ឬទិញទ្រព្យសកម្មធំៗ។</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= VIEW 5: DEBTS & LOANS ================= -->
+      <section id="view-debts" class="view-section hidden space-y-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="font-bold text-slate-800 text-lg" data-i18n="debtTitle">ការគ្រប់គ្រងបំណុល & កម្ចី</h2>
+            <p class="text-xs text-slate-500 mt-0.5" data-i18n="debtSubtitle">តាមដានប្រាក់ដែលត្រូវសងគេ និងប្រាក់ដែលគេជំពាក់យើង</p>
+          </div>
+          <button onclick="document.getElementById('modal-debt').classList.remove('hidden'); document.getElementById('modal-debt').classList.add('flex');" class="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-600/20 flex items-center gap-1.5">
+            <i class="fa-solid fa-plus"></i>
+            <span data-i18n="btnAddDebt">បន្ថែមបំណុល/កម្ចី</span>
+          </button>
+        </div>
+
+        <div id="debts-list-container" class="space-y-3">
+          <!-- Dynamically populated -->
+        </div>
+      </section>
+
+      <!-- ================= VIEW 6: SAVINGS GOALS ================= -->
+      <section id="view-goals" class="view-section hidden space-y-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="font-bold text-slate-800 text-lg" data-i18n="goalTitle">គោលដៅសន្សំគ្រួសារ</h2>
+            <p class="text-xs text-slate-500 mt-0.5" data-i18n="goalSubtitle">សន្សំប្រាក់ដើម្បីក្ដីសុបិន និងអនាគតគ្រួសារ</p>
+          </div>
+          <button onclick="document.getElementById('modal-goal').classList.remove('hidden'); document.getElementById('modal-goal').classList.add('flex');" class="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-600/20 flex items-center gap-1.5">
+            <i class="fa-solid fa-plus"></i>
+            <span data-i18n="btnAddGoal">បន្ថែមគោលដៅថ្មី</span>
+          </button>
+        </div>
+
+        <div id="goals-list-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Dynamically populated -->
+        </div>
+      </section>
+
+      <!-- ================= VIEW 7: SETTINGS & GITHUB AUTO-UPDATE ================= -->
+      <section id="view-settings" class="view-section hidden space-y-6">
+        
+        <!-- GitHub Auto-Update Card -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-2xl bg-slate-900 text-white flex items-center justify-center text-xl shadow-md">
+                <i class="fa-brands fa-github"></i>
+              </div>
+              <div>
+                <h3 class="font-black text-slate-900 text-base" data-i18n="githubUpdateTitle">ប្រព័ន្ធបច្ចុប្បន្នភាព GitHub Auto-Update</h3>
+                <p class="text-xs text-slate-500" data-i18n="autoDeployDesc">ធ្វើបច្ចុប្បន្នភាពទាំង App និងកុំព្យូទ័រដោយស្វ័យប្រវត្តិ</p>
+              </div>
+            </div>
+            <span class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 font-bold text-xs">Live CI/CD</span>
+          </div>
+
+          <!-- Status Box -->
+          <div class="p-4 bg-slate-50 rounded-xl border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <div class="text-xs text-slate-500" data-i18n="githubCurrentVersion">កំណែបច្ចុប្បន្ន</div>
+              <div class="text-base font-bold text-slate-800 font-mono">v1.0.0 (Build 20261101)</div>
+              <div id="update-status-msg" class="text-xs text-slate-500 mt-1 flex items-center gap-1.5">
+                <i class="fa-solid fa-circle-check text-emerald-500"></i>
+                <span data-i18n="githubStatusUpToDate">ប្រព័ន្ធរបស់អ្នកស្ថិតក្នុងកំណែចុងក្រោយបង្អស់ហើយ!</span>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="window.updater.checkForUpdate(false)" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow transition-all active:scale-95 flex items-center gap-2">
+                <i class="fa-solid fa-arrows-rotate"></i>
+                <span data-i18n="btnCheckUpdate">ពិនិត្យមើលកំណែថ្មី</span>
+              </button>
+              <button id="btn-apply-update" onclick="window.updater.applyUpdate()" class="hidden px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow transition-all active:scale-95 flex items-center gap-2">
+                <i class="fa-solid fa-sparkles"></i>
+                <span data-i18n="btnUpdateNow">ធ្វើបច្ចុប្បន្នភាពឥឡូវ</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- How GitHub Auto Deploy Works Guide -->
+          <div class="border-t border-slate-100 pt-4">
+            <h4 class="font-bold text-xs text-slate-700 mb-2" data-i18n="howToAutoDeploy">របៀបដំណើរការ Auto-Deploy តាម GitHub</h4>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+              <div class="p-3 bg-slate-50 rounded-xl">
+                <div class="font-bold text-blue-600 mb-1">១. Push កូដទៅ GitHub</div>
+                <p class="text-slate-500">គ្រាន់តែ run <code class="bg-white px-1 py-0.5 rounded border">git push origin main</code> ចូលទៅកាន់ GitHub Repo របស់អ្នក។</p>
+              </div>
+              <div class="p-3 bg-slate-50 rounded-xl">
+                <div class="font-bold text-blue-600 mb-1">២. GitHub Actions Auto-Build</div>
+                <p class="text-slate-500">GitHub Actions នឹង Deploy ទៅកាន់ GitHub Pages ភ្លាមៗដោយស្វ័យប្រវត្តិ (Free 24/7 Hosting)។</p>
+              </div>
+              <div class="p-3 bg-slate-50 rounded-xl">
+                <div class="font-bold text-blue-600 mb-1">៣. ទទួល Update លើ Phone & PC</div>
+                <p class="text-slate-500">ទូរស័ព្ទដៃ និងកុំព្យូទ័រនឹងលោតប្រាប់ Update ភ្លាមៗ ឬអាចរត់ <code class="bg-white px-1 py-0.5 rounded border">update.bat</code> លើកុំព្យូទ័រ។</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Exchange Rate Settings -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+          <h3 class="font-black text-slate-900 text-base flex items-center gap-2">
+            <i class="fa-solid fa-money-bill-transfer text-blue-600"></i>
+            ការកំណត់អត្រាប្តូរប្រាក់ (Exchange Rate)
+          </h3>
+          <div class="max-w-xs">
+            <label class="text-xs text-slate-500 font-medium block mb-1" data-i18n="exchangeRateLabel">អត្រាប្តូរប្រាក់ (1 USD = ៛)</label>
+            <div class="flex items-center gap-2">
+              <input id="input-exchange-rate" type="number" step="10" value="4100" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <span class="text-sm font-bold text-slate-600 shrink-0">៛</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Backup & Restore -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+          <h3 class="font-black text-slate-900 text-base flex items-center gap-2" data-i18n="backupRestoreTitle">
+            <i class="fa-solid fa-database text-blue-600"></i>
+            បម្រុងទុក & ស្ដារទិន្នន័យ (Backup & Restore)
+          </h3>
+          <div class="flex flex-wrap items-center gap-3">
+            <button id="btn-backup-json" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl flex items-center gap-2 transition-colors">
+              <i class="fa-solid fa-download text-blue-600"></i>
+              <span data-i18n="btnBackupJSON">ទាញយក Backup (JSON)</span>
+            </button>
+            <label class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl flex items-center gap-2 transition-colors cursor-pointer">
+              <i class="fa-solid fa-upload text-emerald-600"></i>
+              <span data-i18n="btnRestoreJSON">ស្ដារទិន្នន័យពី JSON</span>
+              <input id="input-restore-file" type="file" accept=".json" class="hidden">
+            </label>
+            <button id="btn-reset-demo" class="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs rounded-xl flex items-center gap-2 transition-colors">
+              <i class="fa-solid fa-rotate-left"></i>
+              <span data-i18n="btnResetDemo">ផ្ទុកទិន្នន័យគំរូឡើងវិញ</span>
+            </button>
+          </div>
+        </div>
+
+      </section>
+
+    </main>
+
+  </div>
+
+  <!-- Mobile Floating Action Button (FAB) -->
+  <button class="mobile-fab trigger-add-tx shadow-2xl">
+    <i class="fa-solid fa-plus text-2xl"></i>
+  </button>
+
+  <!-- Mobile Bottom Navigation Bar -->
+  <nav class="bottom-nav">
+    <a href="#dashboard" data-view-target="dashboard" class="bottom-nav-item active">
+      <i class="fa-solid fa-chart-line"></i>
+      <span data-i18n="navDashboard">ផ្ទាំងដើម</span>
+    </a>
+    <a href="#transactions" data-view-target="transactions" class="bottom-nav-item">
+      <i class="fa-solid fa-receipt"></i>
+      <span data-i18n="navTransactions">កត់ត្រា</span>
+    </a>
+    <a href="#budgets" data-view-target="budgets" class="bottom-nav-item">
+      <i class="fa-solid fa-pie-chart"></i>
+      <span data-i18n="navBudgets">ថវិកា</span>
+    </a>
+    <a href="#debts" data-view-target="debts" class="bottom-nav-item">
+      <i class="fa-solid fa-hand-holding-dollar"></i>
+      <span data-i18n="navDebts">បំណុល</span>
+    </a>
+    <a href="#settings" data-view-target="settings" class="bottom-nav-item">
+      <i class="fa-solid fa-gear"></i>
+      <span data-i18n="navSettings">កំណត់</span>
+    </a>
+  </nav>
+
+  <!-- ================= MODAL: TRANSACTION ================= -->
+  <div id="modal-transaction" class="modal-overlay fixed inset-0 z-50 hidden items-center justify-center p-4">
+    <div class="modal-content bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden border border-slate-200">
+      <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+        <h3 id="modal-tx-title" class="font-black text-slate-800 text-base" data-i18n="modalAddTitle">កត់ត្រាប្រតិបត្តិការហិរញ្ញវត្ថុ</h3>
+        <button onclick="window.app.closeModal('modal-transaction')" class="text-slate-400 hover:text-slate-600 p-1 text-lg">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form id="form-transaction" class="p-6 space-y-4">
+        
+        <!-- Type & Currency -->
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs text-slate-500 font-semibold block mb-1" data-i18n="labelType">ប្រភេទ</label>
+            <select id="tx-type" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="expense" data-i18n="typeExpense">ចំណាយ (-)</option>
+              <option value="income" data-i18n="typeIncome">ចំណូល (+)</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 font-semibold block mb-1" data-i18n="labelCurrency">រូបិយប័ណ្ណ</label>
+            <select id="tx-currency" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="USD">$ (USD)</option>
+              <option value="KHR">៛ (KHR)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Amount -->
+        <div>
+          <label class="text-xs text-slate-500 font-semibold block mb-1" data-i18n="labelAmount">ចំនួនទឹកប្រាក់</label>
+          <input id="tx-amount" type="number" step="any" required placeholder="0.00" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-lg font-black focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+
+        <!-- Category & Date -->
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs text-slate-500 font-semibold block mb-1" data-i18n="labelCategory">ប្រភេទ</label>
+            <select id="tx-category" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="catFood" data-i18n="catFood">ម្ហូបអាហារ & ភេសជ្ជៈ</option>
+              <option value="catHousing" data-i18n="catHousing">ថ្លៃផ្ទះ & បន្ទប់</option>
+              <option value="catUtilities" data-i18n="catUtilities">ទឹក ភ្លើង & អ៊ីនធឺណិត</option>
+              <option value="catTransport" data-i18n="catTransport">ការធ្វើដំណើរ & សាំង</option>
+              <option value="catHealth" data-i18n="catHealth">សុខភាព & ថ្នាំពេទ្យ</option>
+              <option value="catEducation" data-i18n="catEducation">ការអប់រំ & សាលារៀន</option>
+              <option value="catShopping" data-i18n="catShopping">ទិញទំនិញ & សម្លៀកបំពាក់</option>
+              <option value="catEntertainment" data-i18n="catEntertainment">ការកម្សាន្ត</option>
+              <option value="catSalary" data-i18n="catSalary">ប្រាក់ខែ</option>
+              <option value="catBusiness" data-i18n="catBusiness">អាជីវកម្ម & លក់ដូរ</option>
+              <option value="catFreelance" data-i18n="catFreelance">ការងារក្រៅម៉ោង</option>
+              <option value="catOther" data-i18n="catOther">ផ្សេងៗ</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 font-semibold block mb-1" data-i18n="labelDate">កាលបរិច្ឆេទ</label>
+            <input id="tx-date" type="date" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
+        </div>
+
+        <!-- Family Member & Payment Method -->
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs text-slate-500 font-semibold block mb-1" data-i18n="labelMember">សមាជិក</label>
+            <select id="tx-member" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="memberShared" data-i18n="memberShared">ចំណាយរួមគ្រួសារ</option>
+              <option value="memberDad" data-i18n="memberDad">ឪពុក (Dad)</option>
+              <option value="memberMom" data-i18n="memberMom">ម្ដាយ (Mom)</option>
+              <option value="memberSon" data-i18n="memberSon">កូនប្រុស (Son)</option>
+              <option value="memberDaughter" data-i18n="memberDaughter">កូនស្រី (Daughter)</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 font-semibold block mb-1" data-i18n="labelPayment">ទូទាត់តាម</label>
+            <select id="tx-payment" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="payAba" data-i18n="payAba">ABA Bank</option>
+              <option value="payAcleda" data-i18n="payAcleda">ACLEDA Bank</option>
+              <option value="payWing" data-i18n="payWing">Wing / TrueMoney</option>
+              <option value="payCash" data-i18n="payCash">សាច់ប្រាក់សុទ្ធ</option>
+              <option value="payCard" data-i18n="payCard">កាតឥណទាន</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Note -->
+        <div>
+          <label class="text-xs text-slate-500 font-semibold block mb-1" data-i18n="labelNote">ចំណាំបន្ថែម</label>
+          <input id="tx-note" type="text" placeholder="ឧទាហរណ៍៖ ទិញម្ហូបផ្សារ, បង់ថ្លៃទឹកភ្លើង..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+
+        <!-- Buttons -->
+        <div class="pt-3 flex items-center justify-end gap-3 border-t border-slate-100">
+          <button type="button" onclick="window.app.closeModal('modal-transaction')" class="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 font-bold text-xs" data-i18n="btnCancel">
+            បោះបង់
+          </button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-600/20 active:scale-95" data-i18n="btnSave">
+            រក្សាទុក
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: BUDGET ================= -->
+  <div id="modal-budget" class="modal-overlay fixed inset-0 z-50 hidden items-center justify-center p-4">
+    <div class="modal-content bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden border border-slate-200">
+      <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+        <h3 class="font-black text-slate-800 text-base" data-i18n="budgetSet">កំណត់កញ្ចប់ថវិកា</h3>
+        <button onclick="window.app.closeModal('modal-budget')" class="text-slate-400 hover:text-slate-600 p-1">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <form id="form-budget" class="p-6 space-y-4">
+        <div>
+          <label class="text-xs text-slate-500 font-semibold block mb-1" data-i18n="labelCategory">ប្រភេទ</label>
+          <select id="budget-category" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-medium">
+            <option value="catFood" data-i18n="catFood">ម្ហូបអាហារ & ភេសជ្ជៈ</option>
+            <option value="catHousing" data-i18n="catHousing">ថ្លៃផ្ទះ & បន្ទប់</option>
+            <option value="catUtilities" data-i18n="catUtilities">ទឹក ភ្លើង & អ៊ីនធឺណិត</option>
+            <option value="catTransport" data-i18n="catTransport">ការធ្វើដំណើរ & សាំង</option>
+            <option value="catHealth" data-i18n="catHealth">សុខភាព & ថ្នាំពេទ្យ</option>
+            <option value="catEducation" data-i18n="catEducation">ការអប់រំ & សាលារៀន</option>
+            <option value="catShopping" data-i18n="catShopping">ទិញទំនិញ & សម្លៀកបំពាក់</option>
+            <option value="catEntertainment" data-i18n="catEntertainment">ការកម្សាន្ត</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-xs text-slate-500 font-semibold block mb-1">កម្រិតកំណត់ប្រចាំខែ (USD $)</label>
+          <input id="budget-amount" type="number" step="any" required placeholder="500" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-base font-bold">
+        </div>
+        <div class="pt-2 flex justify-end gap-2">
+          <button type="button" onclick="window.app.closeModal('modal-budget')" class="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 font-bold text-xs" data-i18n="btnCancel">បោះបង់</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs" data-i18n="btnSave">រក្សាទុក</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: DEBT ================= -->
+  <div id="modal-debt" class="modal-overlay fixed inset-0 z-50 hidden items-center justify-center p-4">
+    <div class="modal-content bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden border border-slate-200">
+      <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+        <h3 class="font-black text-slate-800 text-base" data-i18n="btnAddDebt">បន្ថែមបំណុល / កម្ចី</h3>
+        <button onclick="window.app.closeModal('modal-debt')" class="text-slate-400 hover:text-slate-600 p-1">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <form id="form-debt" class="p-6 space-y-4">
+        <div>
+          <label class="text-xs text-slate-500 font-semibold block mb-1" data-i18n="labelType">ប្រភេទ</label>
+          <select id="debt-type" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold">
+            <option value="i_owe" data-i18n="debtIOwe">ខ្ញុំជំពាក់គេ (ត្រូវសង)</option>
+            <option value="owed_to_me" data-i18n="debtOwedToMe">គេជំពាក់ខ្ញុំ (ត្រូវទារ)</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-xs text-slate-500 font-semibold block mb-1" data-i18n="debtPerson">ឈ្មោះបុគ្គល/ស្ថាប័ន</label>
+          <input id="debt-person" type="text" required placeholder="ធនាគារ ឬឈ្មោះមិត្តភក្តិ..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm font-semibold">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs text-slate-500 font-semibold block mb-1" data-i18n="labelAmount">ចំនួនប្រាក់</label>
+            <input id="debt-amount" type="number" step="any" required placeholder="1000" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold">
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 font-semibold block mb-1" data-i18n="labelCurrency">រូបិយប័ណ្ណ</label>
+            <select id="debt-currency" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold">
+              <option value="USD">$ (USD)</option>
+              <option value="KHR">៛ (KHR)</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="text-xs text-slate-500 font-semibold block mb-1" data-i18n="debtDueDate">ថ្ងៃកំណត់សង</label>
+          <input id="debt-due-date" type="date" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-medium">
+        </div>
+        <div>
+          <label class="text-xs text-slate-500 font-semibold block mb-1" data-i18n="labelNote">ចំណាំ</label>
+          <input id="debt-note" type="text" placeholder="កម្ចីទិញផ្ទះ..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-medium">
+        </div>
+        <div class="pt-2 flex justify-end gap-2">
+          <button type="button" onclick="window.app.closeModal('modal-debt')" class="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 font-bold text-xs" data-i18n="btnCancel">បោះបង់</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs" data-i18n="btnSave">រក្សាទុក</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: SAVINGS GOAL ================= -->
+  <div id="modal-goal" class="modal-overlay fixed inset-0 z-50 hidden items-center justify-center p-4">
+    <div class="modal-content bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden border border-slate-200">
+      <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+        <h3 class="font-black text-slate-800 text-base" data-i18n="btnAddGoal">បន្ថែមគោលដៅសន្សំថ្មី</h3>
+        <button onclick="window.app.closeModal('modal-goal')" class="text-slate-400 hover:text-slate-600 p-1">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <form id="form-goal" class="p-6 space-y-4">
+        <div>
+          <label class="text-xs text-slate-500 font-semibold block mb-1">ឈ្មោះគោលដៅ</label>
+          <input id="goal-title-input" type="text" required placeholder="កញ្ចប់គ្រាអាសន្ន ឬទិញឡាន..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm font-semibold">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs text-slate-500 font-semibold block mb-1" data-i18n="goalTarget">គោលដៅសរុប</label>
+            <input id="goal-target-amount" type="number" step="any" required placeholder="5000" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold">
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 font-semibold block mb-1" data-i18n="goalCurrent">សន្សំបានបច្ចុប្បន្ន</label>
+            <input id="goal-current-amount" type="number" step="any" required placeholder="1000" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs text-slate-500 font-semibold block mb-1" data-i18n="labelCurrency">រូបិយប័ណ្ណ</label>
+            <select id="goal-currency" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold">
+              <option value="USD">$ (USD)</option>
+              <option value="KHR">៛ (KHR)</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 font-semibold block mb-1" data-i18n="goalDeadline">កាលបរិច្ឆេទកំណត់</label>
+            <input id="goal-target-date" type="date" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-medium">
+          </div>
+        </div>
+        <div class="pt-2 flex justify-end gap-2">
+          <button type="button" onclick="window.app.closeModal('modal-goal')" class="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 font-bold text-xs" data-i18n="btnCancel">បោះបង់</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs" data-i18n="btnSave">រក្សាទុក</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Application Scripts -->
+  <script src="js/i18n.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/analytics.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/updater.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
