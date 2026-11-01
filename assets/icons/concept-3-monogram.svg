@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- Background Gradient: Deep Oceanic Royal -->
+    <linearGradient id="bgGrad3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="40%" stop-color="#1e3a8a" />
+      <stop offset="100%" stop-color="#0f766e" />
+    </linearGradient>
+
+    <!-- Branch Left (Indigo Blue) -->
+    <linearGradient id="branchLeft" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#60a5fa" />
+      <stop offset="100%" stop-color="#2563eb" />
+    </linearGradient>
+
+    <!-- Branch Right (Emerald Neon) -->
+    <linearGradient id="branchRight" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#10b981" />
+      <stop offset="100%" stop-color="#34d399" />
+    </linearGradient>
+
+    <!-- Center Diamond / Coin -->
+    <linearGradient id="coinGrad3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a" />
+      <stop offset="50%" stop-color="#f59e0b" />
+      <stop offset="100%" stop-color="#d97706" />
+    </linearGradient>
+
+    <filter id="shadowY" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="16" stdDeviation="20" flood-color="#090d16" flood-opacity="0.5" />
+    </filter>
+
+    <filter id="glowCenter" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="0" stdDeviation="25" flood-color="#10b981" flood-opacity="0.4" />
+    </filter>
+  </defs>
+
+  <!-- Base Squircle -->
+  <rect x="16" y="16" width="480" height="480" rx="108" fill="url(#bgGrad3)" filter="url(#shadowY)" />
+  <rect x="17" y="17" width="478" height="478" rx="107" fill="none" stroke="rgba(255, 255, 255, 0.18)" stroke-width="2" />
+
+  <!-- Subtle Circular Halo -->
+  <circle cx="256" cy="256" r="170" fill="none" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1.5" stroke-dasharray="8 8" />
+
+  <!-- Geometric "Y" Monogram with Integrated Growth Trend -->
+  <g filter="url(#glowCenter)">
+    <!-- Base Stem of Y -->
+    <path d="M 234 275 L 234 380 C 234 392 244 402 256 402 C 268 402 278 392 278 380 L 278 275 Z" fill="#3b82f6" />
+
+    <!-- Left Wing of Y (Ascending Support) -->
+    <path d="M 140 145 C 130 156 130 172 142 182 L 235 260 L 277 222 L 180 140 C 168 130 151 132 140 145 Z" fill="url(#branchLeft)" />
+
+    <!-- Right Wing of Y (Rising Rocket Arrow to Peak) -->
+    <path d="M 235 260 L 345 168 C 356 158 358 141 349 129 C 339 118 322 116 311 126 L 235 190 Z" fill="#60a5fa" opacity="0.6" />
+    <path d="M 245 250 L 358 155 L 340 135 L 392 125 L 382 178 L 364 158 L 255 250 Z" fill="url(#branchRight)" />
+  </g>
+
+  <!-- Floating Golden Wealth Sparkle Coin in Center of "Y" -->
+  <g>
+    <circle cx="256" cy="205" r="44" fill="url(#coinGrad3)" stroke="#fef9c3" stroke-width="3" />
+    <circle cx="256" cy="205" r="36" fill="none" stroke="#b45309" stroke-width="1.5" opacity="0.4" />
+    <!-- Modern Finance Symbol (Combining $ and ៛ aesthetic) -->
+    <text x="256" y="219" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Kantumruy Pro', sans-serif" font-weight="900" font-size="36" fill="#ffffff" text-anchor="middle">$</text>
+  </g>
+
+  <!-- Star Highlights -->
+  <circle cx="395" cy="120" r="4" fill="#ffffff" />
+  <circle cx="120" cy="360" r="3" fill="#60a5fa" opacity="0.6" />
+</svg>

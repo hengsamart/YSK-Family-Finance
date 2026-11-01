@@ -22,7 +22,7 @@ class StorageManager {
     this.init();
   }
 
-  // --- IndexedDB Persistence for Bulletproof Mobile Storage ---
+  // --- IndexedDB Persistence with Bidirectional Smart Sync & Auto-Recovery ---
   initIndexedDB() {
     if (!('indexedDB' in window)) return;
     try {
@@ -35,10 +35,51 @@ class StorageManager {
       };
       request.onsuccess = (e) => {
         this.db = e.target.result;
-        this.backupToIndexedDB();
+        this.smartSyncWithIndexedDB();
       };
     } catch (e) {
       console.warn('IndexedDB unavailable:', e);
+    }
+  }
+
+  // Smart Sync: Never blindly overwrite! If LocalStorage is empty but IndexedDB has data, restore it!
+  smartSyncWithIndexedDB() {
+    if (!this.db) return;
+    try {
+      const tx = this.db.transaction('appData', 'readonly');
+      const store = tx.objectStore('appData');
+      const getTxReq = store.get(this.STORAGE_KEYS.TRANSACTIONS);
+
+      getTxReq.onsuccess = () => {
+        const idbData = getTxReq.result ? getTxReq.result.value : null;
+        const localTx = this.getTransactions();
+
+        // If local is empty but IndexedDB has records, restore from IndexedDB!
+        if ((!localTx || localTx.length === 0) && idbData && Array.isArray(idbData) && idbData.length > 0) {
+          console.log('[Storage] Auto-restored transactions from IndexedDB bulletproof cache!', idbData.length);
+          this.setItem(this.STORAGE_KEYS.TRANSACTIONS, idbData);
+          
+          // Also restore budgets, debts, goals
+          ['BUDGETS', 'DEBTS', 'GOALS'].forEach(type => {
+            const req = store.get(this.STORAGE_KEYS[type]);
+            req.onsuccess = () => {
+              if (req.result && req.result.value) {
+                this.setItem(this.STORAGE_KEYS[type], req.result.value);
+              }
+            };
+          });
+
+          window.dispatchEvent(new CustomEvent('transactionsUpdated'));
+          window.dispatchEvent(new CustomEvent('budgetsUpdated'));
+          window.dispatchEvent(new CustomEvent('debtsUpdated'));
+          window.dispatchEvent(new CustomEvent('goalsUpdated'));
+        } else if (localTx && localTx.length > 0) {
+          // If local has data, ensure IndexedDB has it backed up
+          this.backupToIndexedDB();
+        }
+      };
+    } catch (e) {
+      console.warn('smartSyncWithIndexedDB error:', e);
     }
   }
 
@@ -60,12 +101,16 @@ class StorageManager {
     this.saveToIndexedDB(this.STORAGE_KEYS.GOALS, this.getGoals());
   }
 
-  // Safe LocalStorage setter with fallback
+  // Safe LocalStorage setter with fallback and emergency snapshot
   setItem(key, value) {
     const str = typeof value === 'string' ? value : JSON.stringify(value);
     this.memStore[key] = str;
     try {
       localStorage.setItem(key, str);
+      // If saving non-empty transactions, always create an emergency safety copy
+      if (key === this.STORAGE_KEYS.TRANSACTIONS && Array.isArray(value) && value.length > 0) {
+        localStorage.setItem('ysk_emergency_snapshot', str);
+      }
     } catch (e) {
       console.warn('localStorage setItem failed, using memory/IndexedDB:', e);
     }
@@ -83,28 +128,51 @@ class StorageManager {
   }
 
   init() {
-    const isCleaned = this.getItem('ysk_cleaned_v2');
-    if (!isCleaned) {
-      // Automatically clean old demo data for a fresh clean start
-      this.clearAllData();
-      this.setItem('ysk_cleaned_v2', 'true');
-      return;
-    }
-
+    // Check if transactions exist
     const existingTx = this.getItem(this.STORAGE_KEYS.TRANSACTIONS);
     if (!existingTx) {
-      this.clearAllData();
+      // Check emergency snapshot first
+      const emergency = this.getItem('ysk_emergency_snapshot');
+      if (emergency) {
+        try {
+          const parsed = JSON.parse(emergency);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            console.log('[Storage] Recovered from emergency snapshot!');
+            this.setItem(this.STORAGE_KEYS.TRANSACTIONS, parsed);
+            return;
+          }
+        } catch (e) {}
+      }
+      // If genuinely fresh and empty, initialize empty containers safely WITHOUT wiping
+      this.setItem(this.STORAGE_KEYS.TRANSACTIONS, []);
+      this.setItem(this.STORAGE_KEYS.BUDGETS, {});
+      this.setItem(this.STORAGE_KEYS.DEBTS, []);
+      this.setItem(this.STORAGE_KEYS.GOALS, []);
     }
+    this.fetchTransactionsFromBackend();
   }
 
-  // Clear all transactions, budgets, debts and goals
+  // Clear all transactions, budgets, debts and goals (ONLY triggered by explicit user button click!)
   clearAllData() {
+    // Before clearing, preserve rescue backup in case of accidental click
+    const prevTx = this.getTransactions();
+    if (prevTx && prevTx.length > 0) {
+      try {
+        localStorage.setItem('ysk_rescue_backup', JSON.stringify({
+          time: new Date().toISOString(),
+          transactions: prevTx,
+          budgets: this.getBudgets(),
+          debts: this.getDebts(),
+          goals: this.getGoals()
+        }));
+      } catch (e) {}
+    }
+
     this.setItem(this.STORAGE_KEYS.TRANSACTIONS, []);
     this.setItem(this.STORAGE_KEYS.BUDGETS, {});
     this.setItem(this.STORAGE_KEYS.DEBTS, []);
     this.setItem(this.STORAGE_KEYS.GOALS, []);
     this.setItem(this.STORAGE_KEYS.INITIALIZED, 'true');
-    this.setItem('ysk_cleaned_v2', 'true');
     this.backupToIndexedDB();
     window.dispatchEvent(new CustomEvent('transactionsUpdated'));
     window.dispatchEvent(new CustomEvent('budgetsUpdated'));
@@ -329,6 +397,7 @@ class StorageManager {
     list.unshift(tx); // Add to top
     this.setItem(this.STORAGE_KEYS.TRANSACTIONS, list);
     window.dispatchEvent(new CustomEvent('transactionsUpdated', { detail: { action: 'add', tx } }));
+    this.syncTransactionToBackend(tx);
     return tx;
   }
 
@@ -339,6 +408,7 @@ class StorageManager {
       list[index] = { ...list[index], ...updatedTx };
       this.setItem(this.STORAGE_KEYS.TRANSACTIONS, list);
       window.dispatchEvent(new CustomEvent('transactionsUpdated', { detail: { action: 'update', tx: list[index] } }));
+      this.syncTransactionToBackend(list[index]);
       return list[index];
     }
     return null;
@@ -349,6 +419,46 @@ class StorageManager {
     const filtered = list.filter(item => item.id !== id);
     this.setItem(this.STORAGE_KEYS.TRANSACTIONS, filtered);
     window.dispatchEvent(new CustomEvent('transactionsUpdated', { detail: { action: 'delete', id } }));
+    this.deleteTransactionFromBackend(id);
+  }
+
+  // Background SQLite Backend Sync (if local server is running)
+  async syncTransactionToBackend(tx) {
+    if (!window.location.protocol.startsWith('http')) return;
+    try {
+      await fetch('/api/transactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(tx)
+      });
+    } catch (e) {
+      // Offline or static server - ignore silently
+    }
+  }
+
+  async deleteTransactionFromBackend(id) {
+    if (!window.location.protocol.startsWith('http')) return;
+    try {
+      await fetch(`/api/transactions/${id}`, { method: 'DELETE' });
+    } catch (e) {}
+  }
+
+  async fetchTransactionsFromBackend() {
+    if (!window.location.protocol.startsWith('http')) return;
+    try {
+      const res = await fetch('/api/transactions');
+      if (res.ok) {
+        const rows = await res.json();
+        if (Array.isArray(rows) && rows.length > 0) {
+          const current = this.getTransactions();
+          if (!current || current.length === 0) {
+            console.log('[Storage] Loaded transactions from local SQLite backend!');
+            this.setItem(this.STORAGE_KEYS.TRANSACTIONS, rows);
+            window.dispatchEvent(new CustomEvent('transactionsUpdated'));
+          }
+        }
+      }
+    } catch (e) {}
   }
 
   // --- Budgets CRUD ---
