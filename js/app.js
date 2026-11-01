@@ -5,7 +5,7 @@
 class AppController {
   constructor() {
     this.currentView = 'dashboard';
-    this.selectedMonth = ''; // default to current YYYY-MM
+    this.selectedMonth = 'all'; // Default to 'all' so no transactions are ever hidden by accident
     this.selectedMember = 'memberAll';
     this.selectedType = 'all';
     this.searchQuery = '';
@@ -24,11 +24,11 @@ class AppController {
       });
     }
 
-    // Set initial month to current month
+    // Set initial month to current month or 'all'
     const today = new Date();
     const curYear = today.getFullYear();
     const curMonth = String(today.getMonth() + 1).padStart(2, '0');
-    this.selectedMonth = `${curYear}-${curMonth}`;
+    this.currentMonthStr = `${curYear}-${curMonth}`;
 
     // Populate Month filter options
     this.populateMonthFilter();
@@ -43,6 +43,31 @@ class AppController {
     this.render();
   }
 
+  // Floating Toast Notification
+  showToast(msg, type = 'success') {
+    let container = document.getElementById('toast-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'toast-container';
+      document.body.appendChild(container);
+    }
+    const toast = document.createElement('div');
+    toast.className = `toast-item toast-${type}`;
+    const icon = type === 'success' ? 'fa-circle-check' : 'fa-circle-exclamation';
+    toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${msg}</span>`;
+    container.appendChild(toast);
+
+    if ('vibrate' in navigator) {
+      try { navigator.vibrate(40); } catch(e) {}
+    }
+
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateY(12px) scale(0.96)';
+      setTimeout(() => toast.remove(), 300);
+    }, 3200);
+  }
+
   populateMonthFilter() {
     const monthSelect = document.getElementById('filter-month');
     if (!monthSelect) return;
@@ -51,6 +76,13 @@ class AppController {
     const today = new Date();
     const isKm = window.i18n.getLanguage() === 'km';
 
+    // 1. All Time Option (Default)
+    const allOpt = document.createElement('option');
+    allOpt.value = 'all';
+    allOpt.textContent = isKm ? '📅 បង្ហាញគ្រប់ខែទាំងអស់ (All Months)' : '📅 All Time (All Months)';
+    monthSelect.appendChild(allOpt);
+
+    // 2. Last 12 months
     for (let i = 0; i < 12; i++) {
       const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
       const val = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
@@ -61,6 +93,8 @@ class AppController {
       if (val === this.selectedMonth) opt.selected = true;
       monthSelect.appendChild(opt);
     }
+
+    if (this.selectedMonth === 'all') allOpt.selected = true;
   }
 
   bindEvents() {
@@ -209,7 +243,7 @@ class AppController {
           reader.onload = (event) => {
             const success = window.storage.importBackup(event.target.result);
             if (success) {
-              alert(window.i18n.t('restoreSuccess'));
+              this.showToast(window.i18n.t('restoreSuccess'));
               this.render();
             } else {
               alert('Error restoring file.');
@@ -220,11 +254,50 @@ class AppController {
       });
     }
 
+    // Multi-Device Sync: Generate & Copy Sync Code
+    const genSyncBtn = document.getElementById('btn-generate-sync');
+    if (genSyncBtn) {
+      genSyncBtn.addEventListener('click', () => {
+        const code = window.storage.generateSyncCode();
+        const codeInput = document.getElementById('sync-code-output');
+        if (codeInput) {
+          codeInput.value = code;
+          codeInput.select();
+        }
+        navigator.clipboard.writeText(code).then(() => {
+          this.showToast('✅ បានចម្លង Sync Code រួចរាល់! អាចយកទៅ Paste លើទូរស័ព្ទ');
+        }).catch(() => {
+          this.showToast('សូម Copy កូដក្នុងប្រអប់ខាងក្រោម');
+        });
+      });
+    }
+
+    // Multi-Device Sync: Import Sync Code
+    const importSyncBtn = document.getElementById('btn-apply-sync');
+    if (importSyncBtn) {
+      importSyncBtn.addEventListener('click', () => {
+        const codeInput = document.getElementById('sync-code-input');
+        if (codeInput && codeInput.value.trim()) {
+          const ok = window.storage.importSyncCode(codeInput.value.trim());
+          if (ok) {
+            this.showToast('✅ ធ្វើសមកាលកម្មទិន្នន័យជោគជ័យ! (Sync Complete)');
+            codeInput.value = '';
+            this.render();
+          } else {
+            alert('កូដ Sync មិនត្រឹមត្រូវទេ។ សូមពិនិត្យមើលម្ដងទៀត។');
+          }
+        } else {
+          alert('សូមបញ្ចូលកូដ Sync Code!');
+        }
+      });
+    }
+
     const resetDemoBtn = document.getElementById('btn-reset-demo');
     if (resetDemoBtn) {
       resetDemoBtn.addEventListener('click', () => {
         if (confirm('តើអ្នកចង់កំណត់ឡើងវិញនូវទិន្នន័យគំរូទាំងអស់មែនទេ? / Reset to demo data?')) {
           window.storage.loadDemoData();
+          this.showToast('បានផ្ទុកទិន្នន័យគំរូឡើងវិញ!');
           this.render();
         }
       });
@@ -303,21 +376,28 @@ class AppController {
     // 2. Render Smart Insights
     this.renderInsights(insights, health);
 
-    // 3. Render Charts
-    const trendData = window.analytics.getMonthlyTrend(transactions, 6);
-    window.charts.renderExpensePie('chart-expense-pie', categoryBreakdown);
-    window.charts.renderMonthlyTrend('chart-monthly-trend', trendData);
+    // 3. Render Charts safely
+    try {
+      const trendData = window.analytics.getMonthlyTrend(transactions, 6);
+      window.charts.renderExpensePie('chart-expense-pie', categoryBreakdown);
+      window.charts.renderMonthlyTrend('chart-monthly-trend', trendData);
+    } catch (e) {
+      console.warn('Charts render skipped or error:', e);
+    }
 
-    // 4. Render Transactions Table & Mobile Cards
+    // 4. Render Dashboard Recent Transactions Preview
+    this.renderRecentDashboardTransactions(transactions);
+
+    // 5. Render Transactions Table & Mobile Cards
     this.renderTransactions();
 
-    // 5. Render Budgets
+    // 6. Render Budgets
     this.renderBudgets(budgets, categoryBreakdown);
 
-    // 6. Render Debts & Loans
+    // 7. Render Debts & Loans
     this.renderDebts(debts);
 
-    // 7. Render Savings Goals
+    // 8. Render Savings Goals
     this.renderGoals(goals);
 
     // Re-apply translations for dynamic strings
@@ -344,8 +424,8 @@ class AppController {
     if (savEl) {
       savEl.textContent = i18n.formatCurrency(summary.netSavingsUSD, 'USD');
       savEl.className = summary.netSavingsUSD >= 0 
-        ? 'text-2xl font-black text-emerald-600' 
-        : 'text-2xl font-black text-rose-600';
+        ? 'text-xl sm:text-2xl font-black text-emerald-600' 
+        : 'text-xl sm:text-2xl font-black text-rose-600';
     }
 
     // Savings Rate
@@ -384,6 +464,43 @@ class AppController {
     });
   }
 
+  // Render recent 5 transactions directly onto Dashboard
+  renderRecentDashboardTransactions(transactions) {
+    const container = document.getElementById('dashboard-recent-tx');
+    if (!container) return;
+
+    container.innerHTML = '';
+    const recent = transactions.slice(0, 5);
+    const i18n = window.i18n;
+
+    if (recent.length === 0) {
+      container.innerHTML = `<div class="text-xs text-slate-400 py-3 text-center">មិនទាន់មានប្រតិបត្តិការនៅឡើយទេ។ ចុច "+" ដើម្បីកត់ត្រាថ្មី!</div>`;
+      return;
+    }
+
+    recent.forEach(tx => {
+      const isIncome = tx.type === 'income';
+      const formattedAmount = (isIncome ? '+' : '-') + ' ' + i18n.formatCurrency(tx.amount, tx.currency);
+      const amountClass = isIncome ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold';
+
+      const item = document.createElement('div');
+      item.className = 'flex items-center justify-between p-2.5 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors text-xs';
+      item.innerHTML = `
+        <div class="flex items-center gap-2.5 min-w-0">
+          <div class="w-8 h-8 rounded-lg ${isIncome ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'} flex items-center justify-center shrink-0">
+            <i class="fa-solid ${isIncome ? 'fa-arrow-down' : 'fa-arrow-up'}"></i>
+          </div>
+          <div class="min-w-0">
+            <div class="font-bold text-slate-800 truncate">${i18n.t(tx.category)}</div>
+            <div class="text-[10px] text-slate-400">${tx.date} • ${i18n.t(tx.member)}</div>
+          </div>
+        </div>
+        <div class="${amountClass} font-mono font-bold shrink-0">${formattedAmount}</div>
+      `;
+      container.appendChild(item);
+    });
+  }
+
   renderTransactions() {
     const list = window.storage.getTransactions();
     const tbody = document.getElementById('tx-table-body');
@@ -392,7 +509,7 @@ class AppController {
 
     // Filter
     let filtered = list.filter(tx => {
-      let matchMonth = !this.selectedMonth || tx.date.startsWith(this.selectedMonth);
+      let matchMonth = !this.selectedMonth || this.selectedMonth === 'all' || tx.date.startsWith(this.selectedMonth);
       let matchMember = this.selectedMember === 'memberAll' || tx.member === this.selectedMember;
       let matchType = this.selectedType === 'all' || tx.type === this.selectedType;
       let matchSearch = !this.searchQuery || 
@@ -496,6 +613,7 @@ class AppController {
         const id = b.getAttribute('data-id');
         if (confirm(i18n.t('confirmDelete'))) {
           window.storage.deleteTransaction(id);
+          this.showToast('បានលុបប្រតិបត្តិការរួចរាល់!');
         }
       });
     });
@@ -611,6 +729,7 @@ class AppController {
         const target = debts.find(x => x.id === id);
         if (target) {
           window.storage.updateDebt(id, { status: target.status === 'paid' ? 'pending' : 'paid' });
+          this.showToast('បានកែប្រែស្ថានភាពរួចរាល់!');
         }
       });
     });
@@ -620,6 +739,7 @@ class AppController {
         const id = b.getAttribute('data-id');
         if (confirm(i18n.t('confirmDelete'))) {
           window.storage.deleteDebt(id);
+          this.showToast('បានលុបទិន្នន័យរួចរាល់!');
         }
       });
     });
@@ -704,17 +824,34 @@ class AppController {
     const amount = parseFloat(document.getElementById('tx-amount').value) || 0;
     const currency = document.getElementById('tx-currency').value;
     const category = document.getElementById('tx-category').value;
-    const date = document.getElementById('tx-date').value;
+    const date = document.getElementById('tx-date').value || new Date().toISOString().slice(0, 10);
     const member = document.getElementById('tx-member').value;
     const payment = document.getElementById('tx-payment').value;
     const note = document.getElementById('tx-note').value;
+
+    if (amount <= 0) {
+      alert(window.i18n.getLanguage() === 'km' ? 'សូមបញ្ចូលចំនួនទឹកប្រាក់!' : 'Please enter an amount!');
+      return;
+    }
 
     const data = { type, amount, currency, category, date, member, payment, note };
 
     if (this.editingTxId) {
       window.storage.updateTransaction(this.editingTxId, data);
+      this.showToast(window.i18n.getLanguage() === 'km' ? '✅ បានកែប្រែទិន្នន័យជោគជ័យ!' : '✅ Updated successfully!');
     } else {
       window.storage.addTransaction(data);
+      // Auto adjust month filter to match the newly added transaction if not on 'all'
+      const txMonth = date.substring(0, 7);
+      if (this.selectedMonth !== 'all' && this.selectedMonth !== txMonth) {
+        this.selectedMonth = txMonth;
+        const monthSelect = document.getElementById('filter-month');
+        if (monthSelect) monthSelect.value = txMonth;
+      }
+      const isKm = window.i18n.getLanguage() === 'km';
+      const catName = window.i18n.t(category);
+      const formattedAmt = window.i18n.formatCurrency(amount, currency);
+      this.showToast(isKm ? `✅ បានកត់ត្រាជោគជ័យ! (${formattedAmt} - ${catName})` : `✅ Saved successfully! (${formattedAmt} - ${catName})`);
     }
 
     this.closeModal('modal-transaction');
@@ -724,6 +861,7 @@ class AppController {
     const cat = document.getElementById('budget-category').value;
     const amt = parseFloat(document.getElementById('budget-amount').value) || 0;
     window.storage.saveBudget(cat, amt);
+    this.showToast('✅ បានរក្សាទុកកញ្ចប់ថវិកាជោគជ័យ!');
     this.closeModal('modal-budget');
   }
 
@@ -736,6 +874,7 @@ class AppController {
     const note = document.getElementById('debt-note').value;
 
     window.storage.addDebt({ type, person, amount, currency, dueDate, note, status: 'pending' });
+    this.showToast('✅ បានកត់ត្រាបំណុល/កម្ចីជោគជ័យ!');
     this.closeModal('modal-debt');
   }
 
@@ -747,6 +886,7 @@ class AppController {
     const targetDate = document.getElementById('goal-target-date').value;
 
     window.storage.addGoal({ title, targetAmount, currentAmount, currency, targetDate });
+    this.showToast('✅ បានបង្កើតគោលដៅសន្សំជោគជ័យ!');
     this.closeModal('modal-goal');
   }
 }

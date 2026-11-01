@@ -1,11 +1,11 @@
 {
-  "version": "1.0.0",
-  "build": 20261101,
+  "version": "1.0.1",
+  "build": 20261102,
   "releaseDate": "2026-11-01",
   "name": "YSK Family Finance",
   "repo": "hengsamart/YSK-Family-Finance",
   "changelog": {
-    "km": "កំណែដំបូង 1.0.0៖ ប្រព័ន្ធគ្រប់គ្រងហិរញ្ញវត្ថុគ្រួសារឆ្លាតវៃ គាំទ្រភាសាខ្មែរ/អង់គ្លេស រូបិយប័ណ្ណ ដុល្លារ/រៀល វិភាគហិរញ្ញវត្ថុ តាមដានកញ្ចប់ថវិកា បំណុល និងគោលដៅសន្សំ ព្រមទាំងប្រព័ន្ធ GitHub Auto-Update។",
-    "en": "Initial release 1.0.0: Smart Family Finance Management System supporting Khmer/English, USD/KHR currencies, financial analytics, budgeting, debt tracking, savings goals, and GitHub Auto-Update system."
+    "km": "កំណែប្រែ 1.0.1៖ ពង្រឹងប្រព័ន្ធរក្សាទុកទិន្នន័យ (IndexedDB + LocalStorage) មិនបាត់បង់លើទូរស័ព្ទដៃ, បន្ថែមផ្ទាំង Toast ជូនដំណឹងពេល Save ជោគជ័យ, បង្ហាញប្រតិបត្តិការថ្មីៗលើ Dashboard និងមុខងារ Cross-Device Family Sync ផ្ទេរទិន្នន័យឆ្លង Device។",
+    "en": "Version 1.0.1: Enhanced device persistence (IndexedDB + LocalStorage), instant save toast feedback, recent transactions on dashboard, and Cross-Device Family Sync code transfer."
   }
 }

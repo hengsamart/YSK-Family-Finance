@@ -1,6 +1,7 @@
 /**
  * YSK Family Finance - Storage Manager
- * Handles local persistence, CRUD operations, export/import and demo data.
+ * Handles local persistence (LocalStorage + IndexedDB), CRUD operations,
+ * Cross-Device Family Sync, and Export/Import.
  */
 
 class StorageManager {
@@ -10,15 +11,84 @@ class StorageManager {
       BUDGETS: 'ysk_budgets',
       DEBTS: 'ysk_debts',
       GOALS: 'ysk_goals',
-      SETTINGS: 'ysk_settings'
+      SETTINGS: 'ysk_settings',
+      SYNC_KEY: 'ysk_family_sync_key',
+      INITIALIZED: 'ysk_initialized_v1'
     };
 
+    this.memStore = {};
+    this.db = null;
+    this.initIndexedDB();
     this.init();
   }
 
+  // --- IndexedDB Persistence for Bulletproof Mobile Storage ---
+  initIndexedDB() {
+    if (!('indexedDB' in window)) return;
+    try {
+      const request = indexedDB.open('YSK_Family_Finance_DB', 1);
+      request.onupgradeneeded = (e) => {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains('appData')) {
+          db.createObjectStore('appData', { keyPath: 'key' });
+        }
+      };
+      request.onsuccess = (e) => {
+        this.db = e.target.result;
+        this.backupToIndexedDB();
+      };
+    } catch (e) {
+      console.warn('IndexedDB unavailable:', e);
+    }
+  }
+
+  saveToIndexedDB(key, data) {
+    if (!this.db) return;
+    try {
+      const tx = this.db.transaction('appData', 'readwrite');
+      const store = tx.objectStore('appData');
+      store.put({ key: key, value: data, updatedAt: Date.now() });
+    } catch (e) {
+      console.warn('IDB write error:', e);
+    }
+  }
+
+  backupToIndexedDB() {
+    this.saveToIndexedDB(this.STORAGE_KEYS.TRANSACTIONS, this.getTransactions());
+    this.saveToIndexedDB(this.STORAGE_KEYS.BUDGETS, this.getBudgets());
+    this.saveToIndexedDB(this.STORAGE_KEYS.DEBTS, this.getDebts());
+    this.saveToIndexedDB(this.STORAGE_KEYS.GOALS, this.getGoals());
+  }
+
+  // Safe LocalStorage setter with fallback
+  setItem(key, value) {
+    const str = typeof value === 'string' ? value : JSON.stringify(value);
+    this.memStore[key] = str;
+    try {
+      localStorage.setItem(key, str);
+    } catch (e) {
+      console.warn('localStorage setItem failed, using memory/IndexedDB:', e);
+    }
+    this.saveToIndexedDB(key, value);
+  }
+
+  getItem(key) {
+    try {
+      const val = localStorage.getItem(key);
+      if (val !== null) return val;
+    } catch (e) {
+      console.warn('localStorage getItem failed:', e);
+    }
+    return this.memStore[key] || null;
+  }
+
   init() {
-    if (!localStorage.getItem(this.STORAGE_KEYS.TRANSACTIONS)) {
+    const isInitialized = this.getItem(this.STORAGE_KEYS.INITIALIZED);
+    const existingTx = this.getItem(this.STORAGE_KEYS.TRANSACTIONS);
+
+    if (!isInitialized && !existingTx) {
       this.loadDemoData();
+      this.setItem(this.STORAGE_KEYS.INITIALIZED, 'true');
     }
   }
 
@@ -165,7 +235,7 @@ class StorageManager {
     const demoDebts = [
       {
         id: 'debt_01',
-        type: 'i_owe', // I owe someone
+        type: 'i_owe',
         person: 'ធនាគារ ABA (ABA Home Loan)',
         amount: 15000,
         currency: 'USD',
@@ -175,7 +245,7 @@ class StorageManager {
       },
       {
         id: 'debt_02',
-        type: 'owed_to_me', // Someone owes me
+        type: 'owed_to_me',
         person: 'ពូ សុខ (Uncle Sok)',
         amount: 500,
         currency: 'USD',
@@ -215,17 +285,17 @@ class StorageManager {
       }
     ];
 
-    localStorage.setItem(this.STORAGE_KEYS.TRANSACTIONS, JSON.stringify(demoTransactions));
-    localStorage.setItem(this.STORAGE_KEYS.BUDGETS, JSON.stringify(demoBudgets));
-    localStorage.setItem(this.STORAGE_KEYS.DEBTS, JSON.stringify(demoDebts));
-    localStorage.setItem(this.STORAGE_KEYS.GOALS, JSON.stringify(demoGoals));
+    this.setItem(this.STORAGE_KEYS.TRANSACTIONS, demoTransactions);
+    this.setItem(this.STORAGE_KEYS.BUDGETS, demoBudgets);
+    this.setItem(this.STORAGE_KEYS.DEBTS, demoDebts);
+    this.setItem(this.STORAGE_KEYS.GOALS, demoGoals);
   }
 
   // --- Transactions CRUD ---
   getTransactions() {
     try {
-      const data = localStorage.getItem(this.STORAGE_KEYS.TRANSACTIONS);
-      return data ? JSON.parse(data) : [];
+      const data = this.getItem(this.STORAGE_KEYS.TRANSACTIONS);
+      return data ? (typeof data === 'string' ? JSON.parse(data) : data) : [];
     } catch (e) {
       console.error('Failed reading transactions:', e);
       return [];
@@ -236,8 +306,8 @@ class StorageManager {
     const list = this.getTransactions();
     tx.id = 'tx_' + Date.now();
     list.unshift(tx); // Add to top
-    localStorage.setItem(this.STORAGE_KEYS.TRANSACTIONS, JSON.stringify(list));
-    window.dispatchEvent(new CustomEvent('transactionsUpdated'));
+    this.setItem(this.STORAGE_KEYS.TRANSACTIONS, list);
+    window.dispatchEvent(new CustomEvent('transactionsUpdated', { detail: { action: 'add', tx } }));
     return tx;
   }
 
@@ -246,8 +316,8 @@ class StorageManager {
     const index = list.findIndex(item => item.id === id);
     if (index !== -1) {
       list[index] = { ...list[index], ...updatedTx };
-      localStorage.setItem(this.STORAGE_KEYS.TRANSACTIONS, JSON.stringify(list));
-      window.dispatchEvent(new CustomEvent('transactionsUpdated'));
+      this.setItem(this.STORAGE_KEYS.TRANSACTIONS, list);
+      window.dispatchEvent(new CustomEvent('transactionsUpdated', { detail: { action: 'update', tx: list[index] } }));
       return list[index];
     }
     return null;
@@ -256,15 +326,15 @@ class StorageManager {
   deleteTransaction(id) {
     const list = this.getTransactions();
     const filtered = list.filter(item => item.id !== id);
-    localStorage.setItem(this.STORAGE_KEYS.TRANSACTIONS, JSON.stringify(filtered));
-    window.dispatchEvent(new CustomEvent('transactionsUpdated'));
+    this.setItem(this.STORAGE_KEYS.TRANSACTIONS, filtered);
+    window.dispatchEvent(new CustomEvent('transactionsUpdated', { detail: { action: 'delete', id } }));
   }
 
   // --- Budgets CRUD ---
   getBudgets() {
     try {
-      const data = localStorage.getItem(this.STORAGE_KEYS.BUDGETS);
-      return data ? JSON.parse(data) : {};
+      const data = this.getItem(this.STORAGE_KEYS.BUDGETS);
+      return data ? (typeof data === 'string' ? JSON.parse(data) : data) : {};
     } catch (e) {
       return {};
     }
@@ -273,15 +343,15 @@ class StorageManager {
   saveBudget(category, amountUSD) {
     const budgets = this.getBudgets();
     budgets[category] = parseFloat(amountUSD) || 0;
-    localStorage.setItem(this.STORAGE_KEYS.BUDGETS, JSON.stringify(budgets));
+    this.setItem(this.STORAGE_KEYS.BUDGETS, budgets);
     window.dispatchEvent(new CustomEvent('budgetsUpdated'));
   }
 
   // --- Debts CRUD ---
   getDebts() {
     try {
-      const data = localStorage.getItem(this.STORAGE_KEYS.DEBTS);
-      return data ? JSON.parse(data) : [];
+      const data = this.getItem(this.STORAGE_KEYS.DEBTS);
+      return data ? (typeof data === 'string' ? JSON.parse(data) : data) : [];
     } catch (e) {
       return [];
     }
@@ -291,7 +361,7 @@ class StorageManager {
     const list = this.getDebts();
     debt.id = 'debt_' + Date.now();
     list.unshift(debt);
-    localStorage.setItem(this.STORAGE_KEYS.DEBTS, JSON.stringify(list));
+    this.setItem(this.STORAGE_KEYS.DEBTS, list);
     window.dispatchEvent(new CustomEvent('debtsUpdated'));
     return debt;
   }
@@ -301,7 +371,7 @@ class StorageManager {
     const idx = list.findIndex(d => d.id === id);
     if (idx !== -1) {
       list[idx] = { ...list[idx], ...updatedDebt };
-      localStorage.setItem(this.STORAGE_KEYS.DEBTS, JSON.stringify(list));
+      this.setItem(this.STORAGE_KEYS.DEBTS, list);
       window.dispatchEvent(new CustomEvent('debtsUpdated'));
       return list[idx];
     }
@@ -310,15 +380,15 @@ class StorageManager {
 
   deleteDebt(id) {
     const list = this.getDebts().filter(d => d.id !== id);
-    localStorage.setItem(this.STORAGE_KEYS.DEBTS, JSON.stringify(list));
+    this.setItem(this.STORAGE_KEYS.DEBTS, list);
     window.dispatchEvent(new CustomEvent('debtsUpdated'));
   }
 
   // --- Savings Goals CRUD ---
   getGoals() {
     try {
-      const data = localStorage.getItem(this.STORAGE_KEYS.GOALS);
-      return data ? JSON.parse(data) : [];
+      const data = this.getItem(this.STORAGE_KEYS.GOALS);
+      return data ? (typeof data === 'string' ? JSON.parse(data) : data) : [];
     } catch (e) {
       return [];
     }
@@ -328,7 +398,7 @@ class StorageManager {
     const list = this.getGoals();
     goal.id = 'goal_' + Date.now();
     list.push(goal);
-    localStorage.setItem(this.STORAGE_KEYS.GOALS, JSON.stringify(list));
+    this.setItem(this.STORAGE_KEYS.GOALS, list);
     window.dispatchEvent(new CustomEvent('goalsUpdated'));
     return goal;
   }
@@ -338,7 +408,7 @@ class StorageManager {
     const idx = list.findIndex(g => g.id === id);
     if (idx !== -1) {
       list[idx] = { ...list[idx], ...updatedGoal };
-      localStorage.setItem(this.STORAGE_KEYS.GOALS, JSON.stringify(list));
+      this.setItem(this.STORAGE_KEYS.GOALS, list);
       window.dispatchEvent(new CustomEvent('goalsUpdated'));
       return list[idx];
     }
@@ -347,13 +417,13 @@ class StorageManager {
 
   deleteGoal(id) {
     const list = this.getGoals().filter(g => g.id !== id);
-    localStorage.setItem(this.STORAGE_KEYS.GOALS, JSON.stringify(list));
+    this.setItem(this.STORAGE_KEYS.GOALS, list);
     window.dispatchEvent(new CustomEvent('goalsUpdated'));
   }
 
-  // --- Backup & Restore (JSON) ---
-  exportBackup() {
-    const data = {
+  // --- Multi-Device Family Sync Engine ---
+  getExportPayload() {
+    return {
       app: 'YSK Family Finance',
       version: '1.0.0',
       exportedAt: new Date().toISOString(),
@@ -363,7 +433,30 @@ class StorageManager {
       goals: this.getGoals(),
       exchangeRate: window.i18n ? window.i18n.exchangeRate : 4100
     };
+  }
 
+  // Generate 1-click portable Sync Code (Base64 string) for instant transfer to phone
+  generateSyncCode() {
+    const payload = this.getExportPayload();
+    const jsonStr = JSON.stringify(payload);
+    // Encode with URI encoding to support Khmer Unicode characters
+    return btoa(encodeURIComponent(jsonStr));
+  }
+
+  // Restore from portable Sync Code
+  importSyncCode(syncCode) {
+    try {
+      const jsonStr = decodeURIComponent(atob(syncCode.trim()));
+      return this.importBackup(jsonStr);
+    } catch (e) {
+      console.error('Invalid Sync Code:', e);
+      return false;
+    }
+  }
+
+  // --- Backup & Restore (JSON File) ---
+  exportBackup() {
+    const data = this.getExportPayload();
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -376,12 +469,14 @@ class StorageManager {
   importBackup(jsonData) {
     try {
       const data = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
-      if (data.transactions) localStorage.setItem(this.STORAGE_KEYS.TRANSACTIONS, JSON.stringify(data.transactions));
-      if (data.budgets) localStorage.setItem(this.STORAGE_KEYS.BUDGETS, JSON.stringify(data.budgets));
-      if (data.debts) localStorage.setItem(this.STORAGE_KEYS.DEBTS, JSON.stringify(data.debts));
-      if (data.goals) localStorage.setItem(this.STORAGE_KEYS.GOALS, JSON.stringify(data.goals));
+      if (data.transactions) this.setItem(this.STORAGE_KEYS.TRANSACTIONS, data.transactions);
+      if (data.budgets) this.setItem(this.STORAGE_KEYS.BUDGETS, data.budgets);
+      if (data.debts) this.setItem(this.STORAGE_KEYS.DEBTS, data.debts);
+      if (data.goals) this.setItem(this.STORAGE_KEYS.GOALS, data.goals);
       if (data.exchangeRate && window.i18n) window.i18n.setExchangeRate(data.exchangeRate);
 
+      this.setItem(this.STORAGE_KEYS.INITIALIZED, 'true');
+      this.backupToIndexedDB();
       window.dispatchEvent(new CustomEvent('dataImported'));
       return true;
     } catch (err) {

@@ -309,6 +309,22 @@
 
         </div>
 
+        <!-- Recent Transactions Preview on Dashboard -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+          <div class="flex items-center justify-between">
+            <div class="font-bold text-slate-800 text-sm flex items-center gap-2">
+              <i class="fa-solid fa-clock-rotate-left text-blue-600"></i>
+              <span>ប្រតិបត្តិការថ្មីៗ (Recent Transactions)</span>
+            </div>
+            <button onclick="window.app.switchView('transactions')" class="text-xs text-blue-600 hover:underline font-bold">
+              មើលទាំងអស់ (View All) <i class="fa-solid fa-arrow-right ml-1"></i>
+            </button>
+          </div>
+          <div id="dashboard-recent-tx" class="space-y-2">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
       </section>
 
       <!-- ================= VIEW 2: TRANSACTIONS ================= -->
@@ -388,6 +404,50 @@
         <!-- Mobile Card List Container -->
         <div id="tx-mobile-list" class="sm:hidden space-y-2.5">
           <!-- Dynamically populated -->
+        </div>
+
+        <!-- Cross-Device Family Sync (ធ្វើសមកាលកម្មឆ្លង Device) -->
+        <div class="bg-white p-6 rounded-2xl border border-blue-200 bg-gradient-to-br from-white to-blue-50/30 shadow-sm space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="font-black text-slate-900 text-base flex items-center gap-2">
+              <i class="fa-solid fa-arrows-rotate text-blue-600"></i>
+              <span>ធ្វើសមកាលកម្មឆ្លង Device (Computer & Phone Sync)</span>
+            </h3>
+            <span class="text-[11px] bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded-full">One-Click</span>
+          </div>
+          <p class="text-xs text-slate-500">
+            ប្រសិនបើអ្នកចង់ផ្ទេរទិន្នន័យពីកុំព្យូទ័រទៅទូរស័ព្ទដៃ ឬរវាងទូរស័ព្ទសមាជិកគ្រួសារគ្នាឯង៖
+          </p>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <!-- Step 1: Export Sync Code from PC -->
+            <div class="p-4 bg-white rounded-xl border border-slate-200 space-y-2">
+              <div class="font-bold text-xs text-slate-800 flex items-center gap-1.5">
+                <i class="fa-solid fa-arrow-up-from-bracket text-blue-600"></i>
+                <span>១. ចម្លងកូដផ្ទេរពីឧបករណ៍នេះ (Export Sync Code)</span>
+              </div>
+              <p class="text-[11px] text-slate-400">ចុចប៊ូតុងខាងក្រោមដើម្បី Copy កូដទិន្នន័យយកទៅដាក់លើទូរស័ព្ទ៖</p>
+              <button id="btn-generate-sync" class="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm transition-transform active:scale-95 flex items-center justify-center gap-1.5">
+                <i class="fa-regular fa-copy"></i>
+                <span>បង្កើត & ចម្លង Sync Code</span>
+              </button>
+              <input id="sync-code-output" readonly placeholder="កូដ Sync នឹងបង្ហាញនៅត្រង់នេះ..." class="w-full text-[10px] font-mono bg-slate-50 border border-slate-200 rounded-lg p-2 text-slate-600 focus:outline-none">
+            </div>
+
+            <!-- Step 2: Import Sync Code on Phone -->
+            <div class="p-4 bg-white rounded-xl border border-slate-200 space-y-2">
+              <div class="font-bold text-xs text-slate-800 flex items-center gap-1.5">
+                <i class="fa-solid fa-arrow-down-to-bracket text-emerald-600"></i>
+                <span>២. បញ្ចូលកូដលើឧបករណ៍ថ្មី (Import Sync Code)</span>
+              </div>
+              <p class="text-[11px] text-slate-400">Paste កូដ Sync ដែលបានចម្លងរួច ចុចប៊ូតុងដើម្បី Sync ភ្លាមៗ៖</p>
+              <textarea id="sync-code-input" rows="2" placeholder="បិទភ្ជាប់ (Paste) Sync Code នៅត្រង់នេះ..." class="w-full text-xs font-mono bg-slate-50 border border-slate-200 rounded-lg p-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+              <button id="btn-apply-sync" class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-sm transition-transform active:scale-95 flex items-center justify-center gap-1.5">
+                <i class="fa-solid fa-check-double"></i>
+                <span>ធ្វើសមកាលកម្មទិន្នន័យ (Apply Sync)</span>
+              </button>
+            </div>
+          </div>
         </div>
 
       </section>
@@ -590,6 +650,50 @@
               <i class="fa-solid fa-rotate-left"></i>
               <span data-i18n="btnResetDemo">ផ្ទុកទិន្នន័យគំរូឡើងវិញ</span>
             </button>
+          </div>
+        </div>
+
+        <!-- Cross-Device Family Sync (ធ្វើសមកាលកម្មឆ្លង Device) -->
+        <div class="bg-white p-6 rounded-2xl border border-blue-200 bg-gradient-to-br from-white to-blue-50/30 shadow-sm space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="font-black text-slate-900 text-base flex items-center gap-2">
+              <i class="fa-solid fa-arrows-rotate text-blue-600"></i>
+              <span>ធ្វើសមកាលកម្មឆ្លង Device (Computer & Phone Sync)</span>
+            </h3>
+            <span class="text-[11px] bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded-full">One-Click</span>
+          </div>
+          <p class="text-xs text-slate-500">
+            ប្រសិនបើអ្នកចង់ផ្ទេរទិន្នន័យពីកុំព្យូទ័រទៅទូរស័ព្ទដៃ ឬរវាងទូរស័ព្ទសមាជិកគ្រួសារគ្នាឯង៖
+          </p>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <!-- Step 1: Export Sync Code from PC -->
+            <div class="p-4 bg-white rounded-xl border border-slate-200 space-y-2">
+              <div class="font-bold text-xs text-slate-800 flex items-center gap-1.5">
+                <i class="fa-solid fa-arrow-up-from-bracket text-blue-600"></i>
+                <span>១. ចម្លងកូដផ្ទេរពីឧបករណ៍នេះ (Export Sync Code)</span>
+              </div>
+              <p class="text-[11px] text-slate-400">ចុចប៊ូតុងខាងក្រោមដើម្បី Copy កូដទិន្នន័យយកទៅដាក់លើទូរស័ព្ទ៖</p>
+              <button id="btn-generate-sync" class="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm transition-transform active:scale-95 flex items-center justify-center gap-1.5">
+                <i class="fa-regular fa-copy"></i>
+                <span>បង្កើត & ចម្លង Sync Code</span>
+              </button>
+              <input id="sync-code-output" readonly placeholder="កូដ Sync នឹងបង្ហាញនៅត្រង់នេះ..." class="w-full text-[10px] font-mono bg-slate-50 border border-slate-200 rounded-lg p-2 text-slate-600 focus:outline-none">
+            </div>
+
+            <!-- Step 2: Import Sync Code on Phone -->
+            <div class="p-4 bg-white rounded-xl border border-slate-200 space-y-2">
+              <div class="font-bold text-xs text-slate-800 flex items-center gap-1.5">
+                <i class="fa-solid fa-arrow-down-to-bracket text-emerald-600"></i>
+                <span>២. បញ្ចូលកូដលើឧបករណ៍ថ្មី (Import Sync Code)</span>
+              </div>
+              <p class="text-[11px] text-slate-400">Paste កូដ Sync ដែលបានចម្លងរួច ចុចប៊ូតុងដើម្បី Sync ភ្លាមៗ៖</p>
+              <textarea id="sync-code-input" rows="2" placeholder="បិទភ្ជាប់ (Paste) Sync Code នៅត្រង់នេះ..." class="w-full text-xs font-mono bg-slate-50 border border-slate-200 rounded-lg p-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+              <button id="btn-apply-sync" class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-sm transition-transform active:scale-95 flex items-center justify-center gap-1.5">
+                <i class="fa-solid fa-check-double"></i>
+                <span>ធ្វើសមកាលកម្មទិន្នន័យ (Apply Sync)</span>
+              </button>
+            </div>
           </div>
         </div>
 

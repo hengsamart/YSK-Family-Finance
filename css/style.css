@@ -121,6 +121,70 @@ body {
   font-weight: 600;
 }
 
+/* Toast Notifications */
+#toast-container {
+  position: fixed;
+  bottom: 90px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+  max-width: 90vw;
+  width: 360px;
+}
+@media (min-width: 769px) {
+  #toast-container {
+    bottom: 24px;
+    right: 24px;
+    left: auto;
+    transform: none;
+  }
+}
+
+.toast-item {
+  pointer-events: auto;
+  padding: 12px 18px;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.25);
+  animation: toastFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.toast-success {
+  background: #0f172a;
+  color: #ffffff;
+  border: 1px solid rgba(16, 185, 129, 0.5);
+}
+.toast-success i {
+  color: #10b981;
+}
+.toast-danger {
+  background: #0f172a;
+  color: #ffffff;
+  border: 1px solid rgba(239, 68, 68, 0.5);
+}
+.toast-danger i {
+  color: #ef4444;
+}
+
+@keyframes toastFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 /* Modals */
 .modal-overlay {
   background-color: rgba(15, 23, 42, 0.6);
@@ -177,7 +241,7 @@ body {
     background: #ffffff !important;
     color: #000000 !important;
   }
-  .no-print, .bottom-nav, .mobile-fab, button, .modal-overlay {
+  .no-print, .bottom-nav, .mobile-fab, button, .modal-overlay, #toast-container {
     display: none !important;
   }
   .print-only {
