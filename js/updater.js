@@ -8,7 +8,7 @@ class GitHubUpdater {
   constructor() {
     this.currentVersion = '1.0.0';
     this.currentBuild = 20261101;
-    this.repoOwner = 'YSK-Family';
+    this.repoOwner = 'hengsamart';
     this.repoName = 'YSK-Family-Finance';
     this.isUpdateAvailable = false;
     this.latestInfo = null;
