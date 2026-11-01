@@ -1,11 +1,11 @@
 {
-  "version": "1.0.1",
-  "build": 20261102,
+  "version": "1.0.2",
+  "build": 20261103,
   "releaseDate": "2026-11-01",
   "name": "YSK Family Finance",
   "repo": "hengsamart/YSK-Family-Finance",
   "changelog": {
-    "km": "កំណែប្រែ 1.0.1៖ ពង្រឹងប្រព័ន្ធរក្សាទុកទិន្នន័យ (IndexedDB + LocalStorage) មិនបាត់បង់លើទូរស័ព្ទដៃ, បន្ថែមផ្ទាំង Toast ជូនដំណឹងពេល Save ជោគជ័យ, បង្ហាញប្រតិបត្តិការថ្មីៗលើ Dashboard និងមុខងារ Cross-Device Family Sync ផ្ទេរទិន្នន័យឆ្លង Device។",
-    "en": "Version 1.0.1: Enhanced device persistence (IndexedDB + LocalStorage), instant save toast feedback, recent transactions on dashboard, and Cross-Device Family Sync code transfer."
+    "km": "កំណែប្រែ 1.0.2៖ បានសម្អាតទិន្នន័យគំរូចាស់ទាំងអស់ចេញរួចរាល់ ចាប់ផ្ដើមជាមួយទំព័រស្អាត $0.00 ត្រៀមកត់ត្រាទិន្នន័យជាក់ស្ដែង ព្រមទាំងបន្ថែមប៊ូតុង Clear All Data។",
+    "en": "Version 1.0.2: Cleared all old demo data for a completely clean slate ($0.00), ready for real family financial records, plus added Clear All Data button."
   }
 }

@@ -292,6 +292,18 @@ class AppController {
       });
     }
 
+    const clearAllBtn = document.getElementById('btn-clear-all');
+    if (clearAllBtn) {
+      clearAllBtn.addEventListener('click', () => {
+        const isKm = window.i18n.getLanguage() === 'km';
+        if (confirm(isKm ? 'តើអ្នកពិតជាចង់សម្អាត និងលុបទិន្នន័យចាស់ទាំងអស់ចេញមែនទេ? (Clear all data?)' : 'Are you sure you want to clear all data?')) {
+          window.storage.clearAllData();
+          this.showToast(isKm ? '✅ បានសម្អាតទិន្នន័យទាំងអស់រួចរាល់!' : '✅ All data cleared successfully!');
+          this.render();
+        }
+      });
+    }
+
     const resetDemoBtn = document.getElementById('btn-reset-demo');
     if (resetDemoBtn) {
       resetDemoBtn.addEventListener('click', () => {

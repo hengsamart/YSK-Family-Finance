@@ -83,13 +83,34 @@ class StorageManager {
   }
 
   init() {
-    const isInitialized = this.getItem(this.STORAGE_KEYS.INITIALIZED);
-    const existingTx = this.getItem(this.STORAGE_KEYS.TRANSACTIONS);
-
-    if (!isInitialized && !existingTx) {
-      this.loadDemoData();
-      this.setItem(this.STORAGE_KEYS.INITIALIZED, 'true');
+    const isCleaned = this.getItem('ysk_cleaned_v2');
+    if (!isCleaned) {
+      // Automatically clean old demo data for a fresh clean start
+      this.clearAllData();
+      this.setItem('ysk_cleaned_v2', 'true');
+      return;
     }
+
+    const existingTx = this.getItem(this.STORAGE_KEYS.TRANSACTIONS);
+    if (!existingTx) {
+      this.clearAllData();
+    }
+  }
+
+  // Clear all transactions, budgets, debts and goals
+  clearAllData() {
+    this.setItem(this.STORAGE_KEYS.TRANSACTIONS, []);
+    this.setItem(this.STORAGE_KEYS.BUDGETS, {});
+    this.setItem(this.STORAGE_KEYS.DEBTS, []);
+    this.setItem(this.STORAGE_KEYS.GOALS, []);
+    this.setItem(this.STORAGE_KEYS.INITIALIZED, 'true');
+    this.setItem('ysk_cleaned_v2', 'true');
+    this.backupToIndexedDB();
+    window.dispatchEvent(new CustomEvent('transactionsUpdated'));
+    window.dispatchEvent(new CustomEvent('budgetsUpdated'));
+    window.dispatchEvent(new CustomEvent('debtsUpdated'));
+    window.dispatchEvent(new CustomEvent('goalsUpdated'));
+    return true;
   }
 
   loadDemoData() {
